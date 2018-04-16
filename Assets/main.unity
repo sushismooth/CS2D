@@ -160,7 +160,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.0627451, g: 0.0627451, b: 0.0627451, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -887,7 +887,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.0627451, g: 0.0627451, b: 0.0627451, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -1156,6 +1156,14 @@ MonoBehaviour:
     type: 2}
   muzzleFlashPrefab: {fileID: 1278521004787774, guid: 5ad73e0d4041e324da3d8efb2d7389ff,
     type: 2}
+  soundEffectPrefab: {fileID: 1176789655265548, guid: e7783a4947e79a949806e64e7114e74e,
+    type: 2}
+  soundEffectDuration: 3
+  soundEffectVolume: 0.03
+  soundEffectPitch: 1.5
+  m4a4_fire: {fileID: 8300000, guid: 65c331c6d891cfe43a639521e7de79b2, type: 3}
+  ak47_fire: {fileID: 8300000, guid: 1b9e7bb931b21cc4aa17d95dbcd7ff8e, type: 3}
+  deagle_fire: {fileID: 8300000, guid: 4545bbcfeace1b142858bbd7bae369ca, type: 3}
   ammoText: {fileID: 1435863045}
   clipText: {fileID: 26097841}
 --- !u!212 &1299981599
@@ -1428,7 +1436,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.0627451, g: 0.0627451, b: 0.0627451, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:

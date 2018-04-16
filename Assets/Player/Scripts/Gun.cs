@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEditor;
 
 public class Gun : MonoBehaviour {
 
@@ -17,10 +16,24 @@ public class Gun : MonoBehaviour {
 	public GameObject crosshair;
 	public GameObject gunPivot;
 
+	//Bullet
 	public GameObject bulletPrefab;
+
+	//MuzzleFlash
 	public GameObject muzzleFlashPrefab;
 	float muzzleFlashDuration = 0.03f;
 
+	//SoundEffects
+	public GameObject soundEffectPrefab;
+	public float soundEffectDuration;
+	public float soundEffectVolume;
+	public float soundEffectPitch;
+
+	public AudioClip m4a4_fire;
+	public AudioClip ak47_fire;
+	public AudioClip deagle_fire;
+
+	//UI Elements
 	public Text ammoText;
 	public Text clipText;
 
@@ -60,11 +73,12 @@ public class Gun : MonoBehaviour {
 		public float falloffAmount;
 		public float recoilRate; //recoil per shot
 		public float recoilRecoveryRate; //recoil recovered per second
+		public AudioClip fireSoundClip;
 
 		public gun(){
 		}
 
-		public gun (string name, int dmg, int clip, float reloadT, float tbs, float bulletSp, float maxRng, float falloffRng, float falloffAmt, float rclRt, float rclRecov){
+		public gun (string name, int dmg, int clip, float reloadT, float tbs, float bulletSp, float maxRng, float falloffRng, float falloffAmt, float rclRt, float rclRecov, AudioClip fireSnd){
 			weaponName = name;
 			damage = dmg;
 			clipSize = clip;
@@ -76,6 +90,7 @@ public class Gun : MonoBehaviour {
 			falloffAmount = falloffAmt;
 			recoilRate = rclRt;
 			recoilRecoveryRate = rclRecov;
+			fireSoundClip = fireSnd;
 		}
 	}
 
@@ -139,15 +154,7 @@ public class Gun : MonoBehaviour {
 	void Shoot (gun gun){
 		if (Input.GetMouseButton (0) && ammoInClip > 0 && newGunFlicker <= gunFlickerDuration - newGunDisableDuration) {
 			if (timeTilNextShot <= 0 && reloading <= 0) {
-				GameObject bullet = (GameObject)Instantiate (bulletPrefab, transform.position, Quaternion.identity);
-				Bullet bulletScript = bullet.GetComponent<Bullet> ();
-				bulletScript.speed = currentGun.bulletSpeed;
-				bulletScript.damage = currentGun.damage;
-				bulletScript.maxRange = currentGun.maxRange;
-				bulletScript.falloffRange = currentGun.falloffRange;
-				bulletScript.falloffAmount = currentGun.falloffAmount;
-				bulletScript.spawnLocation = muzzle.transform.position;
-				bulletScript.target = mousePosition + spreadVector3;
+				SpawnBullet ();
 
 				ammoInClip -= 1;
 				timeTilNextShot = currentGun.timeBetweenShots;
@@ -156,16 +163,42 @@ public class Gun : MonoBehaviour {
 					spreadFromRecoil = currentGun.recoilRate * 10;
 				}
 
-				GameObject muzzleFlash = (GameObject)Instantiate (muzzleFlashPrefab, muzzle.transform.position, this.transform.rotation);
-				MuzzleFlash muzzleFlashScript = muzzleFlash.GetComponent<MuzzleFlash> ();
-				muzzleFlashScript.duration = muzzleFlashDuration;
-				if (playerScript.direction == -1) {
-					muzzleFlash.GetComponent<SpriteRenderer> ().flipX = true;
-				} else if (playerScript.direction == 1) {
-					muzzleFlash.GetComponent<SpriteRenderer> ().flipX = false;
-				}
+				SpawnMuzzleFlash (muzzle.transform.position, this.transform.rotation, muzzleFlashDuration, playerScript.direction);
+				SpawnSoundEffect (currentGun.fireSoundClip, muzzle.transform.position, soundEffectDuration, soundEffectVolume, soundEffectPitch);
 			}
 		}
+	}
+
+	void SpawnBullet(){
+		GameObject bullet = (GameObject)Instantiate (bulletPrefab, transform.position, Quaternion.identity);
+		Bullet bulletScript = bullet.GetComponent<Bullet> ();
+		bulletScript.speed = currentGun.bulletSpeed;
+		bulletScript.damage = currentGun.damage;
+		bulletScript.maxRange = currentGun.maxRange;
+		bulletScript.falloffRange = currentGun.falloffRange;
+		bulletScript.falloffAmount = currentGun.falloffAmount;
+		bulletScript.spawnLocation = muzzle.transform.position;
+		bulletScript.target = mousePosition + spreadVector3;
+	}
+
+	void SpawnMuzzleFlash(Vector3 position, Quaternion rotation, float duration, int direction){
+		GameObject muzzleFlash = (GameObject)Instantiate (muzzleFlashPrefab, position, rotation);
+		MuzzleFlash muzzleFlashScript = muzzleFlash.GetComponent<MuzzleFlash> ();
+		muzzleFlashScript.duration = duration;
+		if (direction == -1) {
+			muzzleFlash.GetComponent<SpriteRenderer> ().flipX = true;
+		} else if (direction == 1) {
+			muzzleFlash.GetComponent<SpriteRenderer> ().flipX = false;
+		}
+	}
+
+	void SpawnSoundEffect (AudioClip audioClip, Vector3 position, float duration, float volume, float pitch){
+		GameObject soundEffect = (GameObject)Instantiate (soundEffectPrefab, position, transform.rotation);
+		soundEffectScript soundEffectScript = soundEffect.GetComponent<soundEffectScript> ();
+		soundEffectScript.duration = duration;
+		soundEffectScript.volume = volume;
+		soundEffectScript.pitch = pitch;
+		soundEffectScript.audioClip = audioClip;
 	}
 
 	void TimeBetweenShots(){
@@ -273,24 +306,26 @@ public class Gun : MonoBehaviour {
 			2.5f,	//reloadTime
 			0.1f,	//timeBetweenShots - in seconds
 			0.3f,	//bulletSpeed
-			50f, 	//maxRng - maximum range before bullet dissapears
+			30f, 	//maxRng - maximum range before bullet dissapears
 			10f,	//falloffRng - range that damage starts falling off
 			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
-			0.2f, 	//recoilRate - amount of recoil per shot
-			1		//recoilRecoveryRate - amount recoil recovers per second
+			0.25f, 	//recoilRate - amount of recoil per shot
+			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
+			m4a4_fire //fireSoundClip
 		);
 		ak47 = new gun(
 			"ak47", //weapon name
 			30, 	//damage
 			30, 	//clipSize
 			2.5f,	//reloadTime
-			0.15f,	//timeBetweenShots - in seconds
+			0.125f,	//timeBetweenShots - in seconds
 			0.35f,	//bulletSpeed
-			50f, 	//maxRng - maximum range before bullet dissapears
+			30f, 	//maxRng - maximum range before bullet dissapears
 			15f,	//falloffRng - range that damage starts falling off
 			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.4f, 	//recoilRate - amount of recoil per shot
-			1		//recoilRecoveryRate - amount recoil recovers per second
+			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
+			ak47_fire //fireSoundClip
 		);
 		deagle = new gun(
 			"deagle", //weapon name
@@ -303,7 +338,8 @@ public class Gun : MonoBehaviour {
 			5f,		//falloffRng - range that damage starts falling off
 			1f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.7f, 	//recoilRate - amount of recoil per shot
-			0.3f		//recoilRecoveryRate - amount recoil recovers per second
+			0.3f,		//recoilRecoveryRate - amount recoil recovers per second
+			deagle_fire //fireSoundClip
 		);
 	}
 
