@@ -47,9 +47,12 @@ public class Gun : MonoBehaviour {
 	public bool wasMouse1Pressed;
 
 	public gun currentGun;
+	int currentWeaponSlot; // 1 = primary, 2 = secondary
 	int ammoInClip;
-	public gun primaryGun;
-	public gun secondaryGun;
+	gun primaryGun;
+	int primaryGunAmmo;
+	gun secondaryGun;
+	int secondaryGunAmmo;
 	float timeTilNextShot;
 	float reloading;
 	bool tooCloseToShoot;
@@ -78,6 +81,7 @@ public class Gun : MonoBehaviour {
 		public float maxRange;
 		public float falloffRange;
 		public float falloffAmount;
+		public float accuracy;
 		public float recoilRate; //recoil per shot
 		public float recoilRecoveryRate; //recoil recovered per second
 		public AudioClip fireSoundClip;
@@ -87,7 +91,7 @@ public class Gun : MonoBehaviour {
 		}
 
 		public gun (string _weaponName, string _fireMode, int _damage, int _clipSize, float _reloadTime, float _timeBetweenShots, float _bulletSpeed, float _maxRange, 
-					float _falloffRange, float _falloffAmount, float _recoilRate, float _recoilRecoveryRate, AudioClip _fireSoundClip, AudioClip _reloadSoundClip){
+					float _falloffRange, float _falloffAmount, float _accuracy, float _recoilRate, float _recoilRecoveryRate, AudioClip _fireSoundClip, AudioClip _reloadSoundClip){
 			weaponName = _weaponName;
 			fireMode = _fireMode;
 			damage = _damage;
@@ -98,6 +102,7 @@ public class Gun : MonoBehaviour {
 			maxRange = _maxRange;
 			falloffRange = _falloffRange;
 			falloffAmount = _falloffAmount;
+			accuracy = _accuracy;
 			recoilRate = _recoilRate;
 			recoilRecoveryRate = _recoilRecoveryRate;
 			fireSoundClip = _fireSoundClip;
@@ -116,8 +121,7 @@ public class Gun : MonoBehaviour {
 		playerScript = player.GetComponent<Player> ();
 
 		PopulateGuns ();
-		gun defaultGun = m4a4;
-		EquipNewGun (defaultGun);
+		StartingLoadout ();
 	}
 
 	void Update () {
@@ -259,7 +263,10 @@ public class Gun : MonoBehaviour {
 	void Spread(){
 		float distance = Vector3.Distance(muzzle.transform.position, mousePosition);
 		spreadFromVelocity = (Vector3.Magnitude(player.GetComponent<Rigidbody2D> ().velocity)/3) + 1;
-		spread = (spreadFromRecoil * spreadFromVelocity * distance/10) + ((spreadFromVelocity - 1)/3);
+		spread = (spreadFromRecoil * spreadFromVelocity * distance/10) + ((spreadFromVelocity - 1)/3) - currentGun.accuracy;
+		if (spread < 0) {
+			spread = 0;
+		}
 		spreadVector3 = new Vector3 (Random.Range (-spread, spread), Random.Range (-spread, spread), 0);
 
 		if (spreadFromRecoil > 0) {
@@ -273,27 +280,35 @@ public class Gun : MonoBehaviour {
 	void ChangingGuns(){
 		if (newGunFlicker <= 0) {
 			if (Input.GetKeyDown (KeyCode.Alpha1)) {
-				if (currentGun != m4a4) {
-					EquipNewGun (m4a4);
+				if (currentGun != primaryGun) {
+					EquipNewGun (1);
 				}
 			}
 			if (Input.GetKeyDown (KeyCode.Alpha2)) {
-				if (currentGun != ak47) {
-					EquipNewGun (ak47);
-				}
-			}
-			if (Input.GetKeyDown (KeyCode.Alpha3)) {
-				if (currentGun != deagle) {
-					EquipNewGun (deagle);
+				if (currentGun != secondaryGun) {
+					EquipNewGun (2);
 				}
 			}
 		}
 	}
 
-	void EquipNewGun (gun gun){
-		currentGun = gun;
+	void EquipNewGun (int slot){
+		reloading = 0;
+		if (currentWeaponSlot == 1) {
+			primaryGunAmmo = ammoInClip;
+		} else if (currentWeaponSlot == 2) {
+			secondaryGunAmmo = ammoInClip;
+		}
+		if (slot == 1) {
+			currentGun = primaryGun;
+			ammoInClip = primaryGunAmmo;
+			currentWeaponSlot = 1;
+		} else if (slot == 2) {
+			currentGun = secondaryGun;
+			ammoInClip = secondaryGunAmmo;
+			currentWeaponSlot = 2;
+		}
 		newGunFlicker = gunFlickerDuration;
-		ammoInClip = currentGun.clipSize;
 		myAnimator.SetBool ("changingGun", true);
 
 		if (currentGun.weaponName == "m4a4") {
@@ -332,6 +347,22 @@ public class Gun : MonoBehaviour {
 		}
 	}
 
+	void PickupNewGun(gun gun, int slot){
+		if (slot == 1) {
+			primaryGun = gun;
+			primaryGunAmmo = gun.clipSize;
+		} else if (slot == 2) {
+			secondaryGun = gun;
+			secondaryGunAmmo = gun.clipSize;
+		}
+	}
+
+	void StartingLoadout(){
+		PickupNewGun (m4a4, 1);
+		PickupNewGun (ak47, 2);
+		EquipNewGun (1);
+	}
+
 	void PopulateGuns (){
 		m4a4 = new gun(
 			"m4a4", //weapon name
@@ -344,6 +375,7 @@ public class Gun : MonoBehaviour {
 			30f, 	//maxRng - maximum range before bullet dissapears
 			10f,	//falloffRng - range that damage starts falling off
 			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			0.05f,	//accuracy - subtracted from spread
 			0.25f, 	//recoilRate - amount of recoil per shot
 			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
 			m4a4_fire, //fireSoundClip
@@ -359,9 +391,10 @@ public class Gun : MonoBehaviour {
 			0.35f,	//bulletSpeed
 			30f, 	//maxRng - maximum range before bullet dissapears
 			15f,	//falloffRng - range that damage starts falling off
-			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
-			0.4f, 	//recoilRate - amount of recoil per shot
-			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
+			0.4f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			0f,	//accuracy - subtracted from spread
+			0.3f, 	//recoilRate - amount of recoil per shot
+			0.8f,		//recoilRecoveryRate - amount recoil recovers per second
 			ak47_fire, //fireSoundClip
 			null //ak47_reload //reloadSoundClip
 		);
@@ -375,7 +408,8 @@ public class Gun : MonoBehaviour {
 			0.4f,	//bulletSpeed
 			50f, 	//maxRng - maximum range before bullet dissapears
 			5f,		//falloffRng - range that damage starts falling off
-			1f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			1.0f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			0.0f,	//accuracy - subtracted from spread
 			0.7f, 	//recoilRate - amount of recoil per shot
 			0.3f,		//recoilRecoveryRate - amount recoil recovers per second
 			deagle_fire, //fireSoundClip
