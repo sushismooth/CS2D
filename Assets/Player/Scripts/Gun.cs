@@ -282,6 +282,10 @@ public class Gun : MonoBehaviour {
 			if (Input.GetKeyDown (KeyCode.Alpha1)) {
 				if (currentGun != primaryGun) {
 					EquipNewGun (1);
+				} else if (currentGun == m4a4) {
+					PickupNewGun (ak47, 1);
+				} else if (currentGun == ak47) {
+					PickupNewGun (m4a4, 1);
 				}
 			}
 			if (Input.GetKeyDown (KeyCode.Alpha2)) {
@@ -355,12 +359,12 @@ public class Gun : MonoBehaviour {
 			secondaryGun = gun;
 			secondaryGunAmmo = gun.clipSize;
 		}
+		EquipNewGun (slot);
 	}
 
 	void StartingLoadout(){
+		PickupNewGun (deagle, 2);
 		PickupNewGun (m4a4, 1);
-		PickupNewGun (ak47, 2);
-		EquipNewGun (1);
 	}
 
 	void PopulateGuns (){
@@ -372,9 +376,9 @@ public class Gun : MonoBehaviour {
 			2.5f,	//reloadTime
 			0.1f,	//timeBetweenShots - in seconds
 			0.3f,	//bulletSpeed
-			30f, 	//maxRng - maximum range before bullet dissapears
-			10f,	//falloffRng - range that damage starts falling off
-			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			15f, 	//maxRng - maximum range before bullet dissapears
+			3f,	//falloffRng - range that damage starts falling off
+			1f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.05f,	//accuracy - subtracted from spread
 			0.25f, 	//recoilRate - amount of recoil per shot
 			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
@@ -389,10 +393,10 @@ public class Gun : MonoBehaviour {
 			2.5f,	//reloadTime
 			0.125f,	//timeBetweenShots - in seconds
 			0.35f,	//bulletSpeed
-			30f, 	//maxRng - maximum range before bullet dissapears
-			15f,	//falloffRng - range that damage starts falling off
-			0.4f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
-			0f,	//accuracy - subtracted from spread
+			15f, 	//maxRng - maximum range before bullet dissapears
+			5f,	//falloffRng - range that damage starts falling off
+			1f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
+			0.0f,	//accuracy - subtracted from spread
 			0.3f, 	//recoilRate - amount of recoil per shot
 			0.8f,		//recoilRecoveryRate - amount recoil recovers per second
 			ak47_fire, //fireSoundClip
@@ -405,9 +409,9 @@ public class Gun : MonoBehaviour {
 			7, 		//clipSize
 			2f,		//reloadTime
 			0.5f,	//timeBetweenShots - in seconds
-			0.4f,	//bulletSpeed
-			50f, 	//maxRng - maximum range before bullet dissapears
-			5f,		//falloffRng - range that damage starts falling off
+			0.5f,	//bulletSpeed
+			20f, 	//maxRng - maximum range before bullet dissapears
+			0f,		//falloffRng - range that damage starts falling off
 			1.0f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.0f,	//accuracy - subtracted from spread
 			0.7f, 	//recoilRate - amount of recoil per shot

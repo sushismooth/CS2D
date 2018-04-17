@@ -20,6 +20,9 @@ public class Bullet : MonoBehaviour {
 
 	public float trailLength;
 
+	public GameObject damageTextPrefab;
+	public float damageTextDuration;
+
 	void Start () {
 		myTrailRenderer = GetComponent<TrailRenderer> ();
 
@@ -43,9 +46,21 @@ public class Bullet : MonoBehaviour {
 		}
 	}
 
-	void OnCollisionEnter2D(Collision2D collider){
+	void OnTriggerEnter2D(Collider2D collider){
 		if (collider.gameObject.layer == LayerMask.NameToLayer("Obstacles")) {
 			Destroy (this.gameObject);
 		}
+		if (collider.gameObject.layer == LayerMask.NameToLayer("Players")) {
+			SpawnDamageText (damage, collider.transform.position, direction);
+			Destroy (this.gameObject);
+		}
+	}
+
+	void SpawnDamageText(int damageDone, Vector3 position, Vector3 dir){
+		Vector3 randomLocation = new Vector3 (Random.Range (-0.2f, 0.2f), Random.Range (-0.2f, 0.2f), 0);
+		GameObject damageText = (GameObject)Instantiate (damageTextPrefab, position + dir/2 + randomLocation, Quaternion.identity);
+		DamageTextScript damageTextScript = damageText.GetComponent<DamageTextScript> ();
+		damageTextScript.damage = damageDone;
+		damageTextScript.duration = damageTextDuration;
 	}
 }
