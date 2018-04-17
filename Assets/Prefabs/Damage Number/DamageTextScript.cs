@@ -30,7 +30,7 @@ public class DamageTextScript : MonoBehaviour {
 	void Update () {
 		duration -= Time.deltaTime;
 		alpha -= 1 / startDuration * Time.deltaTime;
-		myTextMesh.color = new Color (1, 1, 1, alpha);
+		myTextMesh.color = new Color (0.1f, 0.1f, 0.1f, alpha);
 		if (duration <= 0) {
 			Destroy (this.gameObject);
 		}

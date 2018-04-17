@@ -3,6 +3,46 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+public class gun {
+	public string weaponName;
+	public string fireMode;
+	public int damage;
+	public int clipSize;
+	public float reloadTime;
+	public float timeBetweenShots;
+	public float bulletSpeed;
+	public float maxRange;
+	public float falloffRange;
+	public float falloffAmount;
+	public float accuracy;
+	public float recoilRate; //recoil per shot
+	public float recoilRecoveryRate; //recoil recovered per second
+	public AudioClip fireSoundClip;
+	public AudioClip reloadSoundClip;
+
+	public gun(){
+	}
+
+	public gun (string _weaponName, string _fireMode, int _damage, int _clipSize, float _reloadTime, float _timeBetweenShots, float _bulletSpeed, float _maxRange, 
+		float _falloffRange, float _falloffAmount, float _accuracy, float _recoilRate, float _recoilRecoveryRate, AudioClip _fireSoundClip, AudioClip _reloadSoundClip){
+		weaponName = _weaponName;
+		fireMode = _fireMode;
+		damage = _damage;
+		clipSize = _clipSize;
+		reloadTime = _reloadTime;
+		timeBetweenShots = _timeBetweenShots;
+		bulletSpeed = _bulletSpeed;
+		maxRange = _maxRange;
+		falloffRange = _falloffRange;
+		falloffAmount = _falloffAmount;
+		accuracy = _accuracy;
+		recoilRate = _recoilRate;
+		recoilRecoveryRate = _recoilRecoveryRate;
+		fireSoundClip = _fireSoundClip;
+		reloadSoundClip = _reloadSoundClip;
+	}
+}
+
 public class Gun : MonoBehaviour {
 
 	//Components
@@ -70,7 +110,7 @@ public class Gun : MonoBehaviour {
 	float gunFlickerIntervalDuration = 0.25f;
 
 	//Class for Guns
-	public class gun {
+	/*public class gun {
 		public string weaponName;
 		public string fireMode;
 		public int damage;
@@ -108,12 +148,12 @@ public class Gun : MonoBehaviour {
 			fireSoundClip = _fireSoundClip;
 			reloadSoundClip = _reloadSoundClip;
 		}
-	}
+	}*/
 
 	//Declaring Guns
-	gun m4a4;
-	gun ak47;
-	gun deagle;
+	public gun m4a4;
+	public gun ak47;
+	public gun deagle;
 
 	void Start () {
 		mySpriteRenderer = GetComponent<SpriteRenderer> ();
@@ -351,7 +391,7 @@ public class Gun : MonoBehaviour {
 		}
 	}
 
-	void PickupNewGun(gun gun, int slot){
+	public void PickupNewGun(gun gun, int slot){
 		if (slot == 1) {
 			primaryGun = gun;
 			primaryGunAmmo = gun.clipSize;
@@ -364,7 +404,7 @@ public class Gun : MonoBehaviour {
 
 	void StartingLoadout(){
 		PickupNewGun (deagle, 2);
-		PickupNewGun (m4a4, 1);
+		PickupNewGun (ak47, 1);
 	}
 
 	void PopulateGuns (){
