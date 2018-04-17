@@ -1161,6 +1161,7 @@ MonoBehaviour:
   soundEffectDuration: 3
   soundEffectVolume: 0.03
   soundEffectPitch: 1.5
+  emptyclip_fire: {fileID: 8300000, guid: cbb8d901c95c67042808f94888bc9094, type: 3}
   m4a4_fire: {fileID: 8300000, guid: 65c331c6d891cfe43a639521e7de79b2, type: 3}
   ak47_fire: {fileID: 8300000, guid: 1b9e7bb931b21cc4aa17d95dbcd7ff8e, type: 3}
   deagle_fire: {fileID: 8300000, guid: 4545bbcfeace1b142858bbd7bae369ca, type: 3}

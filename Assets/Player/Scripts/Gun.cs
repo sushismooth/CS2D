@@ -29,6 +29,7 @@ public class Gun : MonoBehaviour {
 	public float soundEffectVolume;
 	public float soundEffectPitch;
 
+	public AudioClip emptyclip_fire;
 	public AudioClip m4a4_fire;
 	public AudioClip ak47_fire;
 	public AudioClip deagle_fire;
@@ -43,11 +44,16 @@ public class Gun : MonoBehaviour {
 
 	//Variables
 	Vector3 mousePosition;
+	public bool wasMouse1Pressed;
 
 	public gun currentGun;
 	int ammoInClip;
+	public gun primaryGun;
+	public gun secondaryGun;
 	float timeTilNextShot;
 	float reloading;
+	bool tooCloseToShoot;
+	float minimumShootDistance = 0.6f;
 
 	float spread;
 	float spreadFromVelocity;
@@ -63,6 +69,7 @@ public class Gun : MonoBehaviour {
 	//Class for Guns
 	public class gun {
 		public string weaponName;
+		public string fireMode;
 		public int damage;
 		public int clipSize;
 		public float reloadTime;
@@ -74,23 +81,27 @@ public class Gun : MonoBehaviour {
 		public float recoilRate; //recoil per shot
 		public float recoilRecoveryRate; //recoil recovered per second
 		public AudioClip fireSoundClip;
+		public AudioClip reloadSoundClip;
 
 		public gun(){
 		}
 
-		public gun (string name, int dmg, int clip, float reloadT, float tbs, float bulletSp, float maxRng, float falloffRng, float falloffAmt, float rclRt, float rclRecov, AudioClip fireSnd){
-			weaponName = name;
-			damage = dmg;
-			clipSize = clip;
-			reloadTime = reloadT;
-			timeBetweenShots = tbs;
-			bulletSpeed = bulletSp;
-			maxRange = maxRng;
-			falloffRange = falloffRng;
-			falloffAmount = falloffAmt;
-			recoilRate = rclRt;
-			recoilRecoveryRate = rclRecov;
-			fireSoundClip = fireSnd;
+		public gun (string _weaponName, string _fireMode, int _damage, int _clipSize, float _reloadTime, float _timeBetweenShots, float _bulletSpeed, float _maxRange, 
+					float _falloffRange, float _falloffAmount, float _recoilRate, float _recoilRecoveryRate, AudioClip _fireSoundClip, AudioClip _reloadSoundClip){
+			weaponName = _weaponName;
+			fireMode = _fireMode;
+			damage = _damage;
+			clipSize = _clipSize;
+			reloadTime = _reloadTime;
+			timeBetweenShots = _timeBetweenShots;
+			bulletSpeed = _bulletSpeed;
+			maxRange = _maxRange;
+			falloffRange = _falloffRange;
+			falloffAmount = _falloffAmount;
+			recoilRate = _recoilRate;
+			recoilRecoveryRate = _recoilRecoveryRate;
+			fireSoundClip = _fireSoundClip;
+			reloadSoundClip = _reloadSoundClip;
 		}
 	}
 
@@ -114,6 +125,7 @@ public class Gun : MonoBehaviour {
 		mousePosition.z = 0;
 
 		GunDirection ();
+		CheckCrosshairDistance ();
 		Shoot (currentGun);
 		Spread ();
 		TimeBetweenShots ();
@@ -129,6 +141,17 @@ public class Gun : MonoBehaviour {
 
 	void LateUpdate(){
 		FinishChangingGun ();
+		wasMouse1Pressed = wasMouseButton1Pressed ();
+	}
+		
+	bool wasMouseButton1Pressed(){
+		if (Input.GetMouseButtonDown (0)) {
+			return true;
+		} else if (Input.GetMouseButtonUp (0)) {
+			return false;
+		} else {
+			return wasMouse1Pressed;
+		}
 	}
 
 	void GunDirection(){
@@ -140,31 +163,42 @@ public class Gun : MonoBehaviour {
 			gunPivot.transform.localPosition = new Vector2 (-0.02f, -0.28f);
 			transform.localPosition = new Vector2 (-0.1f, -0.01f);
 			gunPivot.transform.right = (target - gunPivot.transform.position) * -1;
-
 		} else if (playerScript.direction == 1) {
 			mySpriteRenderer.flipX = false;
 			gunPivot.transform.localPosition = new Vector2 (0.02f, -0.28f);
 			transform.localPosition = new Vector2 (0.1f, -0.01f);
 			gunPivot.transform.right = target - gunPivot.transform.position;
 		}
-		//myAnimator.SetFloat ("animationOffset", myAnimator.GetCurrentAnimatorStateInfo (0).normalizedTime);
+
 		myAnimator.SetInteger ("direction", playerScript.direction);
 	}
 
+	void CheckCrosshairDistance(){
+		if (Vector3.Distance (gunPivot.transform.position, mousePosition) > minimumShootDistance) {
+			tooCloseToShoot = false;
+		} else if (Vector3.Distance (gunPivot.transform.position, mousePosition) <= minimumShootDistance){
+			tooCloseToShoot = true;
+		}
+	}
+
 	void Shoot (gun gun){
-		if (Input.GetMouseButton (0) && ammoInClip > 0 && newGunFlicker <= gunFlickerDuration - newGunDisableDuration) {
-			if (timeTilNextShot <= 0 && reloading <= 0) {
-				SpawnBullet ();
-
-				ammoInClip -= 1;
-				timeTilNextShot = currentGun.timeBetweenShots;
-				spreadFromRecoil += currentGun.recoilRate;
-				if (spreadFromRecoil > currentGun.recoilRate * 10) {
-					spreadFromRecoil = currentGun.recoilRate * 10;
+		if (currentGun.fireMode == "auto" || currentGun.fireMode == "semi" && !wasMouse1Pressed) {
+			if (Input.GetMouseButton (0) && newGunFlicker <= gunFlickerDuration - newGunDisableDuration && !tooCloseToShoot && timeTilNextShot <= 0 && reloading <= 0) {
+				if (ammoInClip > 0) {
+					SpawnBullet ();
+					SpawnMuzzleFlash (muzzle.transform.position, this.transform.rotation, muzzleFlashDuration, playerScript.direction);
+					SpawnSoundEffect (currentGun.fireSoundClip, muzzle.transform.position, soundEffectDuration, soundEffectVolume, soundEffectPitch);
+			
+					ammoInClip -= 1;
+					timeTilNextShot = currentGun.timeBetweenShots;
+					spreadFromRecoil += currentGun.recoilRate;
+					if (spreadFromRecoil > currentGun.recoilRate * 10) {
+						spreadFromRecoil = currentGun.recoilRate * 10;
+					}
+				} else if (ammoInClip == 0 || (ammoInClip < 0 && !wasMouse1Pressed)) {
+					SpawnSoundEffect (emptyclip_fire, muzzle.transform.position, soundEffectDuration, soundEffectVolume, soundEffectPitch);
+					ammoInClip = -1;
 				}
-
-				SpawnMuzzleFlash (muzzle.transform.position, this.transform.rotation, muzzleFlashDuration, playerScript.direction);
-				SpawnSoundEffect (currentGun.fireSoundClip, muzzle.transform.position, soundEffectDuration, soundEffectVolume, soundEffectPitch);
 			}
 		}
 	}
@@ -301,6 +335,7 @@ public class Gun : MonoBehaviour {
 	void PopulateGuns (){
 		m4a4 = new gun(
 			"m4a4", //weapon name
+			"auto", //fireMode
 			25, 	//damage
 			30, 	//clipSize
 			2.5f,	//reloadTime
@@ -311,10 +346,12 @@ public class Gun : MonoBehaviour {
 			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.25f, 	//recoilRate - amount of recoil per shot
 			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
-			m4a4_fire //fireSoundClip
+			m4a4_fire, //fireSoundClip
+			null //m4a4_reload //reloadSoundClip
 		);
 		ak47 = new gun(
 			"ak47", //weapon name
+			"auto", //fireMode
 			30, 	//damage
 			30, 	//clipSize
 			2.5f,	//reloadTime
@@ -325,10 +362,12 @@ public class Gun : MonoBehaviour {
 			0.5f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.4f, 	//recoilRate - amount of recoil per shot
 			1.0f,		//recoilRecoveryRate - amount recoil recovers per second
-			ak47_fire //fireSoundClip
+			ak47_fire, //fireSoundClip
+			null //ak47_reload //reloadSoundClip
 		);
 		deagle = new gun(
 			"deagle", //weapon name
+			"semi", //fireMode
 			50, 	//damage
 			7, 		//clipSize
 			2f,		//reloadTime
@@ -339,7 +378,8 @@ public class Gun : MonoBehaviour {
 			1f, 	//falloffAmt - after falloffRng, amount that damage decreases per unit travelled
 			0.7f, 	//recoilRate - amount of recoil per shot
 			0.3f,		//recoilRecoveryRate - amount recoil recovers per second
-			deagle_fire //fireSoundClip
+			deagle_fire, //fireSoundClip
+			null //deagle_reload //reloadSoundClip
 		);
 	}
 
@@ -350,16 +390,24 @@ public class Gun : MonoBehaviour {
 			myAnimator.SetBool ("reloading", false);
 		}
 
-		if (Input.GetMouseButton (0) && (ammoInClip > 0 || timeTilNextShot > 0) && newGunFlicker <= gunFlickerDuration - newGunDisableDuration) {
-			myAnimator.SetBool ("shooting", true);
-		} else{
+		if (currentGun.fireMode == "auto" || currentGun.fireMode == "semi" && !wasMouse1Pressed) {
+			if (Input.GetMouseButton (0) && (ammoInClip > 0 || (ammoInClip == 0 && timeTilNextShot > 0)) && newGunFlicker <= gunFlickerDuration - newGunDisableDuration && !tooCloseToShoot) {
+				myAnimator.SetBool ("shooting", true);
+			} else {
+				myAnimator.SetBool ("shooting", false);
+			}
+		} else {
 			myAnimator.SetBool ("shooting", false);
 		}
 	}
 
 	void UpdateUI(){
 		Crosshair.scale = spread * 10;
-		ammoText.text = ammoInClip.ToString();
+		if (ammoInClip >= 0) {
+			ammoText.text = ammoInClip.ToString ();
+		} else if (ammoInClip == -1) {
+			ammoText.text = "0";
+		}
 		clipText.text = currentGun.clipSize.ToString();
 	}
 }
